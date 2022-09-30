@@ -52,11 +52,6 @@ Server *Server_new(ServerParameters serverParameters)
     }
     internalState->masterTerminatorPipeInFd = pipefds[0];
     internalState->masterTerminatorPipeOutFd = pipefds[1];
-    if (pipe(pipefds) == -1)
-    {
-        logging_log_error("Error while creating pipe for terminating the worker thread!");
-        exit(FAILED_TO_CREATE_TERMINATION_PIPE);
-    }
     return servr;
 }
 
@@ -151,7 +146,7 @@ static void Server_run(Server *servr)
                     if (internalServerState->activeClients[activeClientIndex] == 0)
                     {
                         internalServerState->activeClients[activeClientIndex] = new_socket;
-                        logging_log_info("Accepted client, added to active connection pool, to get served by the worker thread.\n");
+                        logging_log_info("Accepted client, added to active connection pool.\n");
                         addedToActiveClients = 1;
                     }
                 }
@@ -161,8 +156,6 @@ static void Server_run(Server *servr)
                     close(new_socket);
                 }
             }
-            int messageToWorker = 1;
-            logging_log_info("Waking up the worker thread.\n");
         }
         else
         {
