@@ -10,6 +10,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include "logging.h"
+
 #include "server.h"
 #include "process_return_codes.h"
 #include "random_sequence_util.h"
@@ -46,14 +48,14 @@ Server *Server_new(ServerParameters serverParameters)
     int pipefds[2];
     if (pipe(pipefds) == -1)
     {
-        perror("Error while creating pipe for terminating the main loop!");
+        logging_log_error("Error while creating pipe for terminating the main loop!");
         exit(FAILED_TO_CREATE_TERMINATION_PIPE);
     }
     internalState->masterTerminatorPipeInFd = pipefds[0];
     internalState->masterTerminatorPipeOutFd = pipefds[1];
     if (pipe(pipefds) == -1)
     {
-        perror("Error while creating pipe for terminating the worker thread!");
+        logging_log_error("Error while creating pipe for terminating the worker thread!");
         exit(FAILED_TO_CREATE_TERMINATION_PIPE);
     }
     return servr;
@@ -63,34 +65,34 @@ Server *Server_new(ServerParameters serverParameters)
 /// @param servr The server to run.
 static void Server_run(Server *servr)
 {
-    printf("Server starting up...\n");
+    logging_log_info("Server starting up...\n");
     int serverSocket, addressLength;
     struct sockaddr_in address;
     int socketIndex;
     char readBuffer[1024];
-    printf("Creating server socket.\n");
+    logging_log_info("Creating server socket.\n");
     if ((serverSocket = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
-        perror("Failed to create server socket!");
+        logging_log_error("Failed to create server socket!");
         exit(FAILED_TO_CREATE_SERVER_SOCKET);
     }
 
     int optVal = 1;
-    printf("Setting socket up to allow multiple connections.\n");
+    logging_log_info("Setting socket up to allow multiple connections.\n");
     if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, (char *)&optVal,
                    sizeof(optVal)) < 0)
     {
-        perror("Failed to set server socket to allow multiple connections!");
+        logging_log_error("Failed to set server socket to allow multiple connections!");
         exit(FAILED_TO_SET_SERVER_SOCKET_TO_ALLOW_MULTIPLE_CONNECTIONS);
     }
 
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(servr->serverParameters.port);
-    printf("Binding server socket to localhost:%d.\n", servr->serverParameters.port);
+    logging_log_info("Binding server socket to localhost:%d.\n", servr->serverParameters.port);
     if (bind(serverSocket, (struct sockaddr *)&address, sizeof(address)) < 0)
     {
-        perror("Failed to bind server!");
+        logging_log_error("Failed to bind server!");
         exit(FAILED_TO_BIND_SERVER);
     }
 
@@ -98,7 +100,7 @@ static void Server_run(Server *servr)
 
     if (listen(serverSocket, 30) < 0)
     {
-        perror("Failed to listen on socket.");
+        logging_log_error("Failed to listen on socket.");
         exit(EXIT_FAILURE);
     }
 
@@ -128,29 +130,21 @@ static void Server_run(Server *servr)
             }
         }
 
-        printf("Server waiting for incoming connections.\n");
+        logging_log_info("Server waiting for incoming connections.\n");
         if (select(biggestFdNum + 1, &socketSet, NULL, NULL, NULL) == -1)
         {
-            char *errorMessage;
-            asprintf(&errorMessage, "Error when waiting for connections during select(), error number: %d!", errno);
-            perror(errorMessage);
-            free(errorMessage);
-            errorMessage = 0;
+            logging_log_errno(errno, "Error when waiting for connections during select()");
         }
         if (FD_ISSET(serverSocket, &socketSet))
         {
             int new_socket = accept(serverSocket, (struct sockaddr *)&address, (socklen_t *)&addressLength);
             if (new_socket == -1)
             {
-                char *errorMessage;
-                asprintf(&errorMessage, "Error when accepting socket with accept(), error number: %d!", errno);
-                perror(errorMessage);
-                free(errorMessage);
-                errorMessage = 0;
+                logging_log_errno(errno, "Error when accepting socket with accept()");
             }
             else if (new_socket > 0)
             {
-                printf("New client wants to connect.\n");
+                logging_log_info("New client wants to connect.\n");
                 int activeClientIndex;
                 int addedToActiveClients = 0;
                 for (activeClientIndex = 0; activeClientIndex < internalServerState->maximumClients && !addedToActiveClients; ++activeClientIndex)
@@ -158,18 +152,18 @@ static void Server_run(Server *servr)
                     if (internalServerState->activeClients[activeClientIndex] == 0)
                     {
                         internalServerState->activeClients[activeClientIndex] = new_socket;
-                        printf("Accepted client, added to active connection pool, to get served by the worker thread.\n");
+                        logging_log_info("Accepted client, added to active connection pool, to get served by the worker thread.\n");
                         addedToActiveClients = 1;
                     }
                 }
                 if (!addedToActiveClients)
                 {
-                    printf("Failed to accept client, no more space left for active connections!\n");
+                    logging_log_info("Failed to accept client, no more space left for active connections!\n");
                     close(new_socket);
                 }
             }
             int messageToWorker = 1;
-            printf("Waking up the worker thread.\n");
+            logging_log_info("Waking up the worker thread.\n");
         }
         else
         {
@@ -184,7 +178,7 @@ static void Server_run(Server *servr)
                     {
                         close(currentActiveClient);
                         internalServerState->activeClients[activeClientId] = 0;
-                        printf("Connection fd #%d disconnected.\n", currentActiveClient);
+                        logging_log_info("Connection fd #%d disconnected.\n", currentActiveClient);
                     }
                     else
                     {
@@ -192,7 +186,7 @@ static void Server_run(Server *servr)
                         generate_byte_sequence(bytesToGenerate, currentActiveClient);
                         close(currentActiveClient);
                         internalServerState->activeClients[activeClientId] = 0;
-                        printf("Generated number for connection fd #%d.\n", currentActiveClient);
+                        logging_log_info("Generated number for connection fd #%d.\n", currentActiveClient);
                     }
                 }
             }
@@ -209,7 +203,7 @@ static void Server_daemonRun(Server *serverToStart)
     pid = fork();
     if (pid < 0)
     {
-        perror("Failed to create daemon process!");
+        logging_log_error("Failed to create daemon process!");
         exit(FAILED_TO_CREATE_DAEMON_PROCESS);
     }
     if (pid > 0)
@@ -222,18 +216,20 @@ static void Server_daemonRun(Server *serverToStart)
     int sid = setsid();
     if (sid < 0)
     {
-        perror("Failed to create daemon process' session!");
+        logging_log_error("Failed to create daemon process' session!");
         exit(FAILED_TO_CREATE_DAEMON_SESSION);
     }
 
     if ((chdir("/")) < 0)
     {
-        perror("Failed to change daemon process' working directory!");
+        logging_log_error("Failed to change daemon process' working directory!");
         exit(FAILED_TO_SWITCH_DAEMON_WORKING_DIRECTORY);
     }
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
+    freopen("/opt/one_identity/server_stdout.txt", "a+", stdout);
+    freopen("/opt/one_identity/server_stderr.txt", "a+", stderr);
     Server_run(serverToStart);
 }
 
@@ -243,12 +239,12 @@ void Server_start(Server *serverToStart)
 {
     if (serverToStart->serverParameters.isDaemon)
     {
-        printf(" Starting random sequence generator server as daemon on port %d\n", serverToStart->serverParameters.port);
+        logging_log_info(" Starting random sequence generator server as daemon on port %d\n", serverToStart->serverParameters.port);
         Server_daemonRun(serverToStart);
     }
     else
     {
-        printf(" Starting random sequence generator server on port %d\n", serverToStart->serverParameters.port);
+        logging_log_info(" Starting random sequence generator server on port %d\n", serverToStart->serverParameters.port);
         Server_run(serverToStart);
     }
 }

@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include <logging.h>
 #include "server.h"
 #include "server_parameters.h"
 #include "random_sequence_util.h"
@@ -24,6 +25,7 @@ int main(int argc, char **argv)
 {
     init_random_generator(time(NULL));
     ServerParameters serverParams = ServerParameters_parse(argc, argv);
+    logging_init(serverParams.isDaemon);
     server = Server_new(serverParams);
     signal(SIGKILL, signal_handler);
     Server_start(server);

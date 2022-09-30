@@ -4,6 +4,8 @@
 #include <errno.h>
 #include <string.h>
 
+#include "logging.h"
+
 /// @brief Seeds stdlib.h's random number generator.
 /// @param __seed the seed of the random number generator
 void init_random_generator(unsigned int seed)
@@ -32,11 +34,7 @@ void generate_byte_sequence(unsigned long slenght, int fdToWrite)
         }
         if (write(fdToWrite, &randomNumber, bytesToWrite) == -1)
         {
-            char *errorMessage;
-            asprintf(&errorMessage, "Error when writing the randomly generated sequence, error number: %d!", errno);
-            perror(errorMessage);
-            free(errorMessage);
-            errorMessage = 0;
+            logging_log_errno(errno, "Error when writing the randomly generated sequence!");
         }
         writtenBytes += bytesToWrite;
     }
