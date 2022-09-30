@@ -26,8 +26,8 @@ add_library(OneIdentityTask ${SOURCE})
 add_executable(server src/main_server.c )
 add_executable(client src/main_client.c )
 
-target_link_libraries (server PRIVATE Threads::Threads OneIdentityTask)
-target_link_libraries (client PRIVATE Threads::Threads OneIdentityTask)
+target_link_libraries (server PRIVATE OneIdentityTask)
+target_link_libraries (client PRIVATE OneIdentityTask)
 
 enable_testing()
 find_package(GTest REQUIRED)
