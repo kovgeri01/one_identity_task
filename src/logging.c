@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <memory.h>
+#include <errno.h>
 
 #include "logging.h"
 
@@ -35,7 +36,7 @@ void logging_log_error(char *format, ...)
     }
 }
 
-void logging_log_errno(int errno, char *messageFormat, ...)
+void logging_log_errno(char *messageFormat, ...)
 {
     if (!gIsDaemonProcess)
     {

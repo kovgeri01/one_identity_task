@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <errno.h>
 #include <stdio.h>
 #include <memory.h>
 #include <unistd.h>
@@ -133,14 +132,14 @@ static void Server_run(Server *servr)
         logging_log_info("Server waiting for incoming connections.\n");
         if (select(biggestFdNum + 1, &socketSet, NULL, NULL, NULL) == -1)
         {
-            logging_log_errno(errno, "Error when waiting for connections during select()");
+            logging_log_errno("Error when waiting for connections during select()");
         }
         if (FD_ISSET(serverSocket, &socketSet))
         {
             int new_socket = accept(serverSocket, (struct sockaddr *)&address, (socklen_t *)&addressLength);
             if (new_socket == -1)
             {
-                logging_log_errno(errno, "Error when accepting socket with accept()");
+                logging_log_errno("Error when accepting socket with accept()");
             }
             else if (new_socket > 0)
             {

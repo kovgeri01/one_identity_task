@@ -7,6 +7,6 @@ void logging_log_info(char* format, ...);
 
 void logging_log_error(char* format, ...);
 
-void logging_log_errno(int errno, char* format, ...);
+void logging_log_errno(char* format, ...);
 
 #endif

@@ -34,7 +34,7 @@ void generate_byte_sequence(unsigned long slenght, int fdToWrite)
         }
         if (write(fdToWrite, &randomNumber, bytesToWrite) == -1)
         {
-            logging_log_errno(errno, "Error when writing the randomly generated sequence!");
+            logging_log_errno("Error when writing the randomly generated sequence!");
         }
         writtenBytes += bytesToWrite;
     }
