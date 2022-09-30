@@ -59,7 +59,7 @@ Server *Server_new(ServerParameters serverParameters)
     return servr;
 }
 
-/// @brief Starts up the server according to the configuration, and serves any incomung requests.
+/// @brief Starts up the server according to the configuration, and serves any incoming requests.
 /// @param servr The server to run.
 static void Server_run(Server *servr)
 {
