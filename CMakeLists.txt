@@ -16,7 +16,6 @@ include(CheckIncludeFiles unistd.h)
 add_definitions(-D_POSIX_C_SOURCE=2 -D_GNU_SOURCE=1)
 
 find_package(Threads REQUIRED)
-set(CMAKE_C_FLAGS -pthread)
 
 file(GLOB SOURCE "src/*.c")
 list(REMOVE_ITEM SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/main_server.c)
