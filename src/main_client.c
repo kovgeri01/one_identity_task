@@ -43,7 +43,7 @@ void requestAndPrintRandomNumber(int randomNumberIndex, int lenghtOfRandomByteSe
                 readBytes += readStatus;
             }
         }
-        if (readBytes != numberOfPrintedBytes)
+        if (readBytes != lenghtOfRandomByteSequence)
         {
             perror("Server returned less bytes than requested!");
         }
