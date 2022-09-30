@@ -1,0 +1,26 @@
+
+{
+    "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+    "C_Cpp.default.cppStandard": "c++98",
+    "C_Cpp.default.cStandard": "c89",
+    "files.associations": {
+        "unistd.h": "c",
+        "server_parameters.h": "c",
+        "cstdlib": "c",
+        "cerrno": "c",
+        "process_return_codes.h": "c",
+        "string.h": "c",
+        "socket.h": "c",
+        "in.h": "c",
+        "random_sequence_util.h": "c",
+        "syslog.h": "c",
+        "stdlib.h": "c",
+        "stdio.h": "c",
+        "pthread.h": "c",
+        "array": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "ranges": "cpp",
+        "utility": "cpp"
+    }
+}
